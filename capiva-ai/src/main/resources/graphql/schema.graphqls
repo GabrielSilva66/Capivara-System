@@ -5,7 +5,7 @@ type Query {
 
 type Mutation {
     "Envia uma mensagem de chat e retorna a resposta da IA (RAG + Memory)"
-    ask(input: AskInput!): ChatResponse!
+    ask(input: AskInput!): String!
 
     "Adiciona documentos à base de conhecimento (VectorStore)"
     ingestKnowledge(texts: [String!]!): Boolean!

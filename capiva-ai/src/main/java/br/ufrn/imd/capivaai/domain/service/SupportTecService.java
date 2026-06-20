@@ -55,5 +55,5 @@ public interface SupportTecService {
      * @param userMessage    mensagem enviada pelo usuário
      * @return resposta gerada pelo modelo
      */
-    Flux<String> ask(String conversationId, String userMessage);
+    String ask(String conversationId, String userMessage);
 }

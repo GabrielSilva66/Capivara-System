@@ -64,8 +64,8 @@ public class SupportTecServiceImpl implements SupportTecService {
     }
 
     @Override
-    public Flux<String> ask(String conversationId, String userMessage) {
-        return chatClient.prompt()
+    public String ask(String conversationId, String userMessage) {
+        var responseFlux = chatClient.prompt()
                 .advisors(
                         QuestionAnswerAdvisor.builder(vectorStore).build(),
                         MessageChatMemoryAdvisor.builder(chatMemory).build()
@@ -74,5 +74,19 @@ public class SupportTecServiceImpl implements SupportTecService {
                 .user(userMessage)
                 .stream()
                 .content();
+
+        String fullText = responseFlux
+                .collectList()
+                .map(list -> String.join("", list))
+                .block();
+
+        if (fullText != null) {
+
+            fullText = fullText.replace("\\n", "\n").replace("\\r", "\r");
+        }
+
+        System.out.println("[Groq + MCP Response]: " + fullText);
+
+        return fullText;
     }
 }

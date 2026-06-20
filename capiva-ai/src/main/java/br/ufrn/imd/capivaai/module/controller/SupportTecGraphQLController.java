@@ -39,7 +39,7 @@ public class SupportTecGraphQLController {
     }
 
     @MutationMapping
-    public Flux<String> ask(@Argument AskInputDTO input) {
+    public String ask(@Argument AskInputDTO input) {
         return supportTecService.ask(input.getConversationId(), input.getMessage());
 //        return ChatResponseDTO.builder()
 //                .conversationId(input.getConversationId())
