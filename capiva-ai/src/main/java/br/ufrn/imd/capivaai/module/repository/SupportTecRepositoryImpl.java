@@ -24,6 +24,11 @@ public class SupportTecRepositoryImpl implements SupportTecRepository {
     }
 
     @Override
+    public void addChunks(List<Document> chunks) {
+        vectorStore.add(chunks);
+    }
+
+    @Override
     public List<String> findClosestMatches(String query, int numberOfMatches) {
         SearchRequest request = SearchRequest.builder()
                 .query(query)

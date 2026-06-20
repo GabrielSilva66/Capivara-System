@@ -1,4 +1,4 @@
-package br.ufrn.imd.capivaai.module.config;
+package br.ufrn.imd.capivaai.module.ai.config;
 
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;

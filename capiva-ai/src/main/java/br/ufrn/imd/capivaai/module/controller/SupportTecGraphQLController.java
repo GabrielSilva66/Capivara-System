@@ -9,6 +9,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -29,7 +30,6 @@ import java.util.List;
 public class SupportTecGraphQLController {
 
     private final SupportTecService supportTecService;
-    private final DocumentReader documentReader;
 
     @QueryMapping
     public List<String> findKnowledgeMatches(
@@ -39,12 +39,12 @@ public class SupportTecGraphQLController {
     }
 
     @MutationMapping
-    public ChatResponseDTO ask(@Argument AskInputDTO input) {
-        String answer = supportTecService.ask(input.getConversationId(), input.getMessage());
-        return ChatResponseDTO.builder()
-                .conversationId(input.getConversationId())
-                .answer(answer)
-                .build();
+    public Flux<String> ask(@Argument AskInputDTO input) {
+        return supportTecService.ask(input.getConversationId(), input.getMessage());
+//        return ChatResponseDTO.builder()
+//                .conversationId(input.getConversationId())
+//                .answer(answer)
+//                .build();
     }
 
     @MutationMapping
@@ -55,11 +55,7 @@ public class SupportTecGraphQLController {
 
     @MutationMapping
     public boolean ingestDocument(@Argument String fileUrl) {
-        List<String> texts = documentReader.loadText(fileUrl)
-                .stream()
-                .map(doc -> doc.getText())
-                .toList();
-        supportTecService.add(texts);
+        supportTecService.ingestDocument(fileUrl);
         return true;
     }
 }

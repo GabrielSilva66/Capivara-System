@@ -1,5 +1,7 @@
 package br.ufrn.imd.capivaai.domain.service;
 
+import reactor.core.publisher.Flux;
+
 import java.util.List;
 
 /**
@@ -20,6 +22,14 @@ public interface SupportTecService {
      * @param information textos a serem indexados
      */
     void add(List<String> information);
+
+
+    /**
+     * Parsing do documento
+     *
+     * @param fileUrl textos a serem indexados
+     */
+    void ingestDocument(String fileUrl);
 
     /**
      * Recupera os {@code numberOfMatches} trechos mais similares à {@code query}.
@@ -45,5 +55,5 @@ public interface SupportTecService {
      * @param userMessage    mensagem enviada pelo usuário
      * @return resposta gerada pelo modelo
      */
-    String ask(String conversationId, String userMessage);
+    Flux<String> ask(String conversationId, String userMessage);
 }

@@ -1,0 +1,28 @@
+=======================================================================
+MANUAL DE SUPORTE - SISTEMA DE GESTÃO DE PEDIDOS, COMPRAS E ATENDIMENTO
+=======================================================================
+
+CATEGORIA 1: FALHAS NA FINALIZAÇÃO DE PEDIDOS E PAGAMENTOS (APLICAÇÃO)
+-----------------------------------------------------------------------
+Sintoma: O operador tenta fechar uma venda ou pedido de compra, mas o sistema exibe "Erro Interno", trava na tela de processamento ou não gera o código do pedido.
+Procedimentos de Resolução:
+1. Erro de Timeout no Gateway de Pagamento: Se o sistema travar especificamente na comunicação com a maquininha de cartão ou PIX, verifique se o microsserviço de pagamentos externo está respondendo. Não reenvie o pedido para evitar duplicidade de cobrança.
+2. Sincronização de Estoque (Estoque Insuficiente): Se o pedido sumir ou der erro ao salvar, consulte o inventário. Se dois operadores venderem o último item simultaneamente, a aplicação vai rejeitar a requisição de compra.
+3. Sessão Expirada: Se o atendente do SAC passar muito tempo sem mexer na tela de pedidos, o token de segurança expira. Oriente a salvar o rascunho, fazer logout e login novamente.
+
+CATEGORIA 2: INSTABILIDADE DE REDE NA EMISSÃO DE NOTAS E COMPRAS (REDE)
+-----------------------------------------------------------------------
+Sintoma: Erros de conexão ao tentar enviar ordens de compra para fornecedores ou emitir notas fiscais.
+Procedimentos de Resolução:
+1. Oscilação de Link de Internet: Sistemas de compras dependem de APIs externas (como SEFAZ ou servidores dos fornecedores). Verifique se o link principal de internet da empresa caiu e se o tráfego foi redirecionado para o link de contingência (4G/Fibra secundária).
+2. Erro de DNS Local: Se o gerenciador de pedidos não carregar nenhuma imagem de produto ou dados de clientes, limpe o cache de DNS da máquina do usuário rodando o comando correspondente no sistema operacional ou reiniciando o roteador local.
+3. Bloqueio de Firewall: Certifique-se de que as portas de comunicação com o servidor onde o gerenciador de pedidos está hospedado não foram bloqueadas por atualizações de segurança locais.
+
+CATEGORIA 3: FALHAS FÍSICAS NO PONTO DE ATENDIMENTO E ESTOQUE (HARDWARE)
+-----------------------------------------------------------------------
+Sintoma: Leitores de código de barras, impressoras de cupom fiscal ou computadores do estoque não funcionam com o sistema.
+Procedimentos de Resolução:
+1. Impressora Térmica Não Emite Comprovante: Verifique se o cabo USB/Rede da impressora está conectado. Teste se há papel na bobina e se a tampa foi fechada corretamente. No sistema, limpe a fila de impressão travada do sistema operacional.
+2. Leitor de Código de Barras Inoperante: Se o leitor BIPAR mas o produto não entrar no carrinho de compras, valide se o foco do cursor do teclado está posicionado no campo correto de "Buscar Produto". Se o leitor estiver desconfigurado, passe o código de barras de reset contido no manual do fabricante.
+3. Lentidão Crítica na Máquina Local: Se a interface de atendimento ao cliente estiver travando muito, verifique se o navegador do usuário não está com dezenas de abas abertas, consumindo toda a memória RAM disponível na máquina de trabalho.
+
