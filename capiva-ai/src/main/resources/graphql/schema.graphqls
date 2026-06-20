@@ -1,0 +1,27 @@
+type Query {
+    "Busca os N trechos mais similares da base de conhecimento para uma dada query"
+    findKnowledgeMatches(query: String!, topK: Int! = 3): [String!]!
+}
+
+type Mutation {
+    "Envia uma mensagem de chat e retorna a resposta da IA (RAG + Memory)"
+    ask(input: AskInput!): ChatResponse!
+
+    "Adiciona documentos à base de conhecimento (VectorStore)"
+    ingestKnowledge(texts: [String!]!): Boolean!
+
+    "Ingere um documento a partir de uma URL de arquivo"
+    ingestDocument(fileUrl: String!): Boolean!
+}
+
+input AskInput {
+    "ID de conversa para manter histórico (chat memory). Gere um UUID no cliente."
+    conversationId: String!
+    "Mensagem do usuário"
+    message: String!
+}
+
+type ChatResponse {
+    conversationId: String!
+    answer: String!
+}
