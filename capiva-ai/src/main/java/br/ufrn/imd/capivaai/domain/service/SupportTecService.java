@@ -1,13 +1,14 @@
 package br.ufrn.imd.capivaai.domain.service;
 
-import reactor.core.publisher.Flux;
+import br.ufrn.imd.capivaai.domain.model.AskResponse;
+import br.ufrn.imd.capivaai.module.dto.request.AskInputDTO;
 
 import java.util.List;
 
 /**
  * Porta de domínio do módulo de Suporte Técnico com IA.
  * <p>
- * Implementa os casos de uso:
+ * Casos de uso:
  * <ul>
  *   <li>Ingestão de conhecimento na VectorStore (base RAG).</li>
  *   <li>Busca semântica na base de conhecimento.</li>
@@ -23,20 +24,19 @@ public interface SupportTecService {
      */
     void add(List<String> information);
 
-
     /**
-     * Parsing do documento
+     * Parsing e ingestão de documento a partir de URL.
      *
-     * @param fileUrl textos a serem indexados
+     * @param fileUrl URL do arquivo a ser indexado
      */
     void ingestDocument(String fileUrl);
 
     /**
      * Recupera os {@code numberOfMatches} trechos mais similares à {@code query}.
      *
-     * @param query          texto de busca
+     * @param query           texto de busca
      * @param numberOfMatches quantidade de resultados
-     * @return lista de textos similares
+     * @return lista de trechos similares
      */
     List<String> findClosestMatches(String query, int numberOfMatches);
 
@@ -49,11 +49,16 @@ public interface SupportTecService {
     String findCloseMatch(String query);
 
     /**
-     * Responde a uma mensagem do usuário usando RAG + histórico de conversa.
+     * Processa a mensagem do usuário com RAG + memória + ferramentas MCP.
+     * <p>
+     * Injeta os dados estruturados do chamado ({@code userName}, {@code title},
+     * {@code description}, {@code severity}) como contexto no prompt da IA,
+     * permitindo que ela crie o ticket e a issue no GitHub sem precisar
+     * perguntar ao usuário durante o chat.
      *
-     * @param conversationId identificador único da sessão (UUID gerado pelo cliente)
-     * @param userMessage    mensagem enviada pelo usuário
-     * @return resposta gerada pelo modelo
+     * @param input DTO com todos os dados do chamado e a mensagem do usuário
+     * @return resposta estruturada com o texto para o usuário e o status do ticket
      */
-    String ask(String conversationId, String userMessage);
+    AskResponse ask(AskInputDTO input);
 }
+

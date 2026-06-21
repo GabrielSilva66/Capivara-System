@@ -1,15 +1,13 @@
 package br.ufrn.imd.capivaai.module.controller;
 
+import br.ufrn.imd.capivaai.domain.model.AskResponse;
 import br.ufrn.imd.capivaai.domain.service.SupportTecService;
 import br.ufrn.imd.capivaai.module.dto.request.AskInputDTO;
-import br.ufrn.imd.capivaai.module.dto.response.ChatResponseDTO;
-import br.ufrn.imd.capivaai.module.util.DocumentReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
-import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -19,7 +17,9 @@ import java.util.List;
  * <p>Operações disponíveis:
  * <ul>
  *   <li><b>Query</b> {@code findKnowledgeMatches} – busca semântica na VectorStore.</li>
- *   <li><b>Mutation</b> {@code ask} – chat com RAG + memória de conversa.</li>
+ *   <li><b>Mutation</b> {@code ask} – chat com RAG + memória + ferramentas MCP.
+ *       Recebe os dados do formulário do MS1 e retorna a resposta da IA com o
+ *       {@code ticketStatus} para que o MS1 persista o ticket adequadamente.</li>
  *   <li><b>Mutation</b> {@code ingestKnowledge} – indexa textos livres na VectorStore.</li>
  *   <li><b>Mutation</b> {@code ingestDocument} – lê um arquivo via TikaDocumentReader
  *       e indexa seu conteúdo na VectorStore.</li>
@@ -39,12 +39,8 @@ public class SupportTecGraphQLController {
     }
 
     @MutationMapping
-    public String ask(@Argument AskInputDTO input) {
-        return supportTecService.ask(input.getConversationId(), input.getMessage());
-//        return ChatResponseDTO.builder()
-//                .conversationId(input.getConversationId())
-//                .answer(answer)
-//                .build();
+    public AskResponse ask(@Argument AskInputDTO input) {
+        return supportTecService.ask(input);
     }
 
     @MutationMapping
@@ -59,3 +55,4 @@ public class SupportTecGraphQLController {
         return true;
     }
 }
+

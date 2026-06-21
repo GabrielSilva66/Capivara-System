@@ -4,8 +4,8 @@ type Query {
 }
 
 type Mutation {
-    "Envia uma mensagem de chat e retorna a resposta da IA (RAG + Memory)"
-    ask(input: AskInput!): String!
+    "Envia uma mensagem de suporte e retorna a resposta da IA com o status do ticket"
+    ask(input: AskInput!): AskResponse!
 
     "Adiciona documentos à base de conhecimento (VectorStore)"
     ingestKnowledge(texts: [String!]!): Boolean!
@@ -14,14 +14,33 @@ type Mutation {
     ingestDocument(fileUrl: String!): Boolean!
 }
 
+"Dados completos do chamado enviados pelo MS1"
 input AskInput {
-    "ID de conversa para manter histórico (chat memory). Gerar um UUID no cliente."
+    "ID de conversa para manter histórico (chat memory). UUID gerado pelo MS1."
     conversationId: String!
-    "Mensagem do usuário"
+    "Mensagem livre do usuário"
     message: String!
+    "Nome do usuário (preenchido via formulário no MS1)"
+    userName: String!
+    "Título do problema (preenchido via formulário no MS1)"
+    title: String!
+    "Descrição detalhada do problema (preenchida via formulário no MS1)"
+    description: String!
+    "Severidade: BAIXA, MEDIA, ALTA ou CRITICA"
+    severity: String!
 }
 
-type ChatResponse {
-    conversationId: String!
+"Resposta da IA com a mensagem para o usuário e o status do chamado"
+type AskResponse {
+    "Resposta textual da IA (sem mencionar GitHub, issues ou ferramentas internas)"
     answer: String!
+    "Status do chamado definido pela IA após análise"
+    ticketStatus: TicketStatus!
+}
+
+"Status do ticket definido pela IA"
+enum TicketStatus {
+    RESOLVED
+    WAITING
+    ESCALATED_GITHUB
 }
