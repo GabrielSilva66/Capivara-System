@@ -12,17 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Carrega a base de conhecimento interna na VectorStore logo após o
- * contexto Spring estar completamente inicializado.
- * <p>
- * O evento {@link ApplicationReadyEvent} garante que todos os beans —
- * incluindo o {@link org.springframework.ai.vectorstore.VectorStore} e o
- * modelo de embedding — estão prontos antes da ingestão começar.
- * <p>
- * O arquivo lido é configurado em {@code app.knowledge-base.path}
- * (padrão: {@code classpath:knowledge/knowledge-base.txt}).
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,11 +21,6 @@ public class KnowledgeBaseLoader {
     private final DocumentReader documentReader;
     private final SupportTecRepository repository;
 
-    /**
-     * Dispara a ingestão da base de conhecimento após o boot completo.
-     * Em caso de falha, loga o erro sem derrubar a aplicação — o serviço
-     * sobe normalmente, mas sem o contexto pré-carregado.
-     */
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         log.info("[KnowledgeBaseLoader] Iniciando ingestão da base de conhecimento interna...");

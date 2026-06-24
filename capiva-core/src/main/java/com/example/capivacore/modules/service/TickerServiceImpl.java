@@ -11,7 +11,9 @@ import com.example.capivacore.modules.util.ConversationIdGenerator;
 import com.example.capivacore.modules.util.StatusTicketParser;
 import com.example.capivacore.modules.web.dto.SupportRequestDTO;
 import com.example.capivacore.modules.web.dto.SupportResponseDTO;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +37,9 @@ public class TickerServiceImpl implements TicketService {
 
 
     @Override
-    @CircuitBreaker(name = "ai-service", fallbackMethod = "processSupportFallback")
-    @Retry(name = "ai-service")
+    @Bulkhead(name = "capiva-ai", fallbackMethod = "processSupportFallback")
+    @CircuitBreaker(name = "capiva-ai", fallbackMethod = "processSupportFallback")
+    @Retry(name = "capiva-ai")
     public SupportResponseDTO processSupport(SupportRequestDTO request) {
 
         String conversationId = conversationIdGenerator.resolveOrGenerate(request.conversationId());
@@ -47,8 +50,7 @@ public class TickerServiceImpl implements TicketService {
         AiAskResponse aiResponse = aiGraphQlClient.ask(request, conversationId);
 
         if (aiResponse == null) {
-            return processSupportFallback(request, conversationId,
-                    new IllegalStateException("MS2 retornou null"));
+            return processSupportFallback(request, new IllegalStateException("MS2 retornou null"));
         }
 
         StatusTicket status = StatusTicketParser.parseOrWaiting(aiResponse.ticketStatus());
@@ -72,9 +74,9 @@ public class TickerServiceImpl implements TicketService {
      *
      */
     public SupportResponseDTO processSupportFallback(SupportRequestDTO request,
-                                                     String conversationId,
                                                      Throwable ex) {
         log.error("[MS1] Fallback ativado — MS2 indisponível: {}", ex.getMessage());
+        String conversationId = conversationIdGenerator.resolveOrGenerate(request.conversationId());
 
         Ticket ticket = buildTicket(request, StatusTicket.WAITING, conversationId);
         Ticket saved  = ticketRepository.save(ticket);

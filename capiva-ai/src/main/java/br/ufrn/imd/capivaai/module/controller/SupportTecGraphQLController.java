@@ -14,16 +14,15 @@ import java.util.List;
 /**
  * Resolver GraphQL para o módulo de Suporte Técnico com IA.
  *
- * <p>Operações disponíveis:
- * <ul>
- *   <li><b>Query</b> {@code findKnowledgeMatches} – busca semântica na VectorStore.</li>
- *   <li><b>Mutation</b> {@code ask} – chat com RAG + memória + ferramentas MCP.
+ * Operações disponíveis:
+ *   Query {@code findKnowledgeMatches} – busca semântica na VectorStore.
+ *   Mutation {@code ask} – chat com RAG + memória + ferramentas MCP.
  *       Recebe os dados do formulário do MS1 e retorna a resposta da IA com o
- *       {@code ticketStatus} para que o MS1 persista o ticket adequadamente.</li>
- *   <li><b>Mutation</b> {@code ingestKnowledge} – indexa textos livres na VectorStore.</li>
- *   <li><b>Mutation</b> {@code ingestDocument} – lê um arquivo via TikaDocumentReader
- *       e indexa seu conteúdo na VectorStore.</li>
- * </ul>
+ *       {@code ticketStatus} para que o MS1 persista o ticket adequadamente.
+ *   Mutation {@code ingestKnowledge} – indexa textos livres na VectorStore.
+ *   Mutation {@code ingestDocument} – lê um arquivo via TikaDocumentReader
+ *       e indexa seu conteúdo na VectorStore.
+ *
  */
 @Controller
 @RequiredArgsConstructor

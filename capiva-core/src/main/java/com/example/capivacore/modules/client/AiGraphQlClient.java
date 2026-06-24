@@ -1,6 +1,7 @@
 package com.example.capivacore.modules.client;
 
 import com.example.capivacore.modules.web.dto.SupportRequestDTO;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.graphql.client.HttpGraphQlClient;
@@ -33,6 +34,7 @@ public class AiGraphQlClient {
     }
 
 
+    @RateLimiter(name = "capiva-ai-client")
     public AiAskResponse ask(SupportRequestDTO request, String conversationId) {
         log.info("[AiGraphQlClient] Chamando MS2 | conversationId={} | status=?",
                 conversationId);
@@ -40,7 +42,6 @@ public class AiGraphQlClient {
         AiAskResponse response = graphQlClient.document(ASK_MUTATION)
                 .variable("input", Map.of(
                         "conversationId", conversationId,
-                        "message",        request.message(),
                         "userName",       request.userName(),
                         "title",          request.title(),
                         "description",    request.description(),

@@ -19,8 +19,5 @@ public record SupportRequestDTO(
         @NotBlank(message = "severity é obrigatória")
         @Pattern(regexp = "BAIXA|MEDIA|ALTA|CRITICA",
                  message = "severity deve ser: BAIXA, MEDIA, ALTA ou CRITICA")
-        String severity,
-
-        @NotBlank(message = "message é obrigatória")
-        String message
+        String severity
 ) {}

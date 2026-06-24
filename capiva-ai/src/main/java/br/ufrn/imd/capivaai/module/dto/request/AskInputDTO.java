@@ -21,9 +21,6 @@ public class AskInputDTO {
     @NotBlank
     private String conversationId;
 
-    @NotBlank
-    private String message;
-
     /** Nome do usuário que abriu o chamado. */
     @NotBlank
     private String userName;

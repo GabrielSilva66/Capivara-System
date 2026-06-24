@@ -18,8 +18,6 @@ type Mutation {
 input AskInput {
     "ID de conversa para manter histórico (chat memory). UUID gerado pelo MS1."
     conversationId: String!
-    "Mensagem livre do usuário"
-    message: String!
     "Nome do usuário (preenchido via formulário no MS1)"
     userName: String!
     "Título do problema (preenchido via formulário no MS1)"
