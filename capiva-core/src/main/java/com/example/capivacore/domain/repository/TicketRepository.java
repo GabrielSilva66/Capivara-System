@@ -19,7 +19,7 @@ public interface TicketRepository {
     List<Ticket> findAll();
 
     /** Busca um ticket pelo seu UUID. */
-    Optional<Ticket> findById(UUID id);
+    Optional<Ticket> findById(String id);
 
     /** Lista tickets por status. */
     List<Ticket> findByStatus(String status);

@@ -7,24 +7,19 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "ticketId")
 @Entity
 @Table(name = "CP_TICKET")
 public class TicketEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    /** ID da conversa no MS2 (ChatMemory conversationId). */
-    @Column(name = "conversation_id", nullable = false)
-    private String conversationId;
+    @Column(name = "ticket_id", nullable = false)
+    private String ticketId;
 
     @Column(name = "user_name", nullable = false)
     private String userName;

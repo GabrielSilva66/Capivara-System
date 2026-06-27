@@ -1,4 +1,4 @@
-package com.example.capivacore.domain.model.enums;
+package br.ufrn.imd.capivagitscalator.domain;
 
 public enum Severity {
     LOW,

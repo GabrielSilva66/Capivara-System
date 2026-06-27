@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ConversationIdGenerator {
+public class TicketIdGenerator {
 
     public static final String PREFIX = "TICKET_";
     private static final int DIGITS = 6;

@@ -7,17 +7,19 @@ import com.example.capivacore.domain.repository.TicketRepository;
 import com.example.capivacore.domain.service.TicketService;
 import com.example.capivacore.modules.client.AiGraphQlClient;
 import com.example.capivacore.modules.client.AiGraphQlClient.AiAskResponse;
-import com.example.capivacore.modules.util.ConversationIdGenerator;
+import com.example.capivacore.modules.util.TicketIdGenerator;
 import com.example.capivacore.modules.util.StatusTicketParser;
+import com.example.capivacore.modules.web.dto.EscalatedTicketDTO;
 import com.example.capivacore.modules.web.dto.SupportRequestDTO;
 import com.example.capivacore.modules.web.dto.SupportResponseDTO;
+import com.example.capivacore.modules.web.mapper.TicketMapper;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +33,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TickerServiceImpl implements TicketService {
 
-    private final TicketRepository       ticketRepository;
-    private final AiGraphQlClient        aiGraphQlClient;
-    private final ConversationIdGenerator conversationIdGenerator;
+    private final TicketRepository   ticketRepository;
+    private final AiGraphQlClient   aiGraphQlClient;
+    private final TicketIdGenerator ticketIdGenerator;
 
 
     @Override
@@ -42,12 +44,12 @@ public class TickerServiceImpl implements TicketService {
     @Retry(name = "capiva-ai")
     public SupportResponseDTO processSupport(SupportRequestDTO request) {
 
-        String conversationId = conversationIdGenerator.resolveOrGenerate(request.conversationId());
+        String ticketId = ticketIdGenerator.resolveOrGenerate(request.conversationId());
 
-        log.info("[MS1] processSupport | user={} | conversationId={} | severity={}",
-                request.userName(), conversationId, request.severity());
+        log.info("[MS1] processSupport | user={} | ticketId={} | severity={}",
+                request.userName(), ticketId, request.severity());
 
-        AiAskResponse aiResponse = aiGraphQlClient.ask(request, conversationId);
+        AiAskResponse aiResponse = aiGraphQlClient.ask(request, ticketId);
 
         if (aiResponse == null) {
             return processSupportFallback(request, new IllegalStateException("MS2 retornou null"));
@@ -57,15 +59,15 @@ public class TickerServiceImpl implements TicketService {
 
         if (StatusTicket.RESOLVED.equals(status)) {
             log.info("[MS1] Chamado resolvido pela IA — nenhum ticket criado");
-            return new SupportResponseDTO(aiResponse.answer(), conversationId, null, StatusTicket.RESOLVED);
+            return new SupportResponseDTO(aiResponse.answer(), ticketId, StatusTicket.RESOLVED);
         }
 
-        Ticket ticket = buildTicket(request, status, conversationId);
+        Ticket ticket = TicketMapper.toDTO(request, status, ticketId);
         Ticket saved  = ticketRepository.save(ticket);
 
-        log.info("[MS1] Ticket persistido | id={} | status={}", saved.getId(), status);
+        log.info("[MS1] Ticket persistido | id={} | status={}", saved.getTicketId(), status);
 
-        return new SupportResponseDTO(aiResponse.answer(), conversationId, saved.getId(), status);
+        return new SupportResponseDTO(aiResponse.answer(), saved.getTicketId(), status);
     }
 
     /**
@@ -76,21 +78,19 @@ public class TickerServiceImpl implements TicketService {
     public SupportResponseDTO processSupportFallback(SupportRequestDTO request,
                                                      Throwable ex) {
         log.error("[MS1] Fallback ativado — MS2 indisponível: {}", ex.getMessage());
-        String conversationId = conversationIdGenerator.resolveOrGenerate(request.conversationId());
+        String conversationId = ticketIdGenerator.resolveOrGenerate(request.conversationId());
 
-        Ticket ticket = buildTicket(request, StatusTicket.WAITING, conversationId);
+        Ticket ticket = TicketMapper.toDTO(request, StatusTicket.WAITING, conversationId);
         Ticket saved  = ticketRepository.save(ticket);
 
         return new SupportResponseDTO(
                 "Nosso assistente está temporariamente indisponível. " +
-                "Seu chamado foi registrado com o ID " + saved.getId() +
+                "Seu chamado foi registrado com o ID " + saved.getTicketId() +
                 " e será atendido em breve pela nossa equipe.",
-                conversationId,
-                saved.getId(),
+                saved.getTicketId(),
                 StatusTicket.WAITING
         );
     }
-
 
     @Override
     public List<Ticket> findAll() {
@@ -98,39 +98,40 @@ public class TickerServiceImpl implements TicketService {
     }
 
     @Override
-    public Optional<Ticket> findById(UUID id) {
+    public Optional<Ticket> findById(String id) {
         return ticketRepository.findById(id);
     }
 
     @Override
-    public Ticket updateStatus(UUID id, String newStatus) {
+    public Ticket updateStatus(String id, String newStatus) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ticket não encontrado: " + id));
-        // Usa o parser para garantir normalização uppercase + inglês
         ticket.setStatus(StatusTicketParser.parse(newStatus, ticket.getStatus()));
         return ticketRepository.save(ticket);
     }
 
-    // Helpers privados
+    @Override
+    public void updateSeverity() {
 
-    private Ticket buildTicket(SupportRequestDTO request, StatusTicket status, String conversationId) {
-        Ticket ticket = new Ticket();
-        ticket.setConversationId(conversationId);
-        ticket.setUserName(request.userName());
-        ticket.setTitle(request.title());
-        ticket.setDescription(request.description());
-        ticket.setSeverity(parseSeverity(request.severity()));
-        ticket.setStatus(status);
-        return ticket;
     }
 
-    private Severity parseSeverity(String rawSeverity) {
-        return switch (rawSeverity.toUpperCase()) {
-            case "BAIXA"   -> Severity.LOW;
-            case "MEDIA"   -> Severity.MID;
-            case "ALTA"    -> Severity.HIGH;
-            case "CRITICA" -> Severity.URGENT;
-            default        -> Severity.MID;
-        };
+
+    @Transactional
+    private void updateLocalTickets(List<EscalatedTicketDTO> escalations) {
+        for (EscalatedTicketDTO esc : escalations) {
+            ticketRepository.findById(esc.ticketId()).ifPresent(ticket -> {
+                ticket.setSeverity(parseSeverity(esc.newSeverity()));
+                ticket.setStatus(StatusTicket.ESCALATED_GITHUB);
+                ticketRepository.save(ticket);
+            });
+        }
     }
+    private Severity parseSeverity(String raw) {
+        try {
+            return Severity.valueOf(raw.toUpperCase());
+        } catch (Exception e) {
+            return Severity.MID;
+        }
+    }
+
 }

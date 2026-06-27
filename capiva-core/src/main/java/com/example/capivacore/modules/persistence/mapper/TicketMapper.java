@@ -9,7 +9,7 @@ public class TicketMapper {
 
     public static TicketEntity toEntity(Ticket ticket) {
         TicketEntity entity = new TicketEntity();
-        entity.setConversationId(ticket.getConversationId());
+        entity.setTicketId(ticket.getTicketId());
         entity.setUserName(ticket.getUserName());
         entity.setTitle(ticket.getTitle());
         entity.setDescription(ticket.getDescription());
@@ -20,8 +20,7 @@ public class TicketMapper {
 
     public static Ticket toModel(TicketEntity entity) {
         return new Ticket(
-                entity.getId(),
-                entity.getConversationId(),
+                entity.getTicketId(),
                 entity.getUserName(),
                 entity.getTitle(),
                 entity.getDescription(),

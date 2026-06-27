@@ -19,8 +19,10 @@ public interface TicketService {
 
     List<Ticket> findAll();
 
-    Optional<Ticket> findById(UUID id);
+    Optional<Ticket> findById(String id);
 
-    Ticket updateStatus(UUID id, String newStatus);
+    Ticket updateStatus(String id, String newStatus);
+
+    void updateSeverity();
 }
 

@@ -1,5 +1,6 @@
 package com.example.capivacore.modules.util;
 
+import com.example.capivacore.domain.model.enums.Severity;
 import com.example.capivacore.domain.model.enums.StatusTicket;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,6 +27,16 @@ public final class StatusTicketParser {
 
     public static StatusTicket parseOrWaiting(String raw) {
         return parse(raw, StatusTicket.WAITING);
+    }
+
+    public static Severity parseSeverity(String rawSeverity) {
+        return switch (rawSeverity.toUpperCase()) {
+            case "BAIXA"   -> Severity.LOW;
+            case "MEDIA"   -> Severity.MID;
+            case "ALTA"    -> Severity.HIGH;
+            case "CRITICA" -> Severity.URGENT;
+            default        -> Severity.MID;
+        };
     }
 
 }

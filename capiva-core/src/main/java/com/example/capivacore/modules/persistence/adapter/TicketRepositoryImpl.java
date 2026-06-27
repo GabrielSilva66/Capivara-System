@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -35,7 +34,7 @@ public class TicketRepositoryImpl implements TicketRepository {
     }
 
     @Override
-    public Optional<Ticket> findById(UUID id) {
+    public Optional<Ticket> findById(String id) {
         return jpaRepository.findById(id).map(TicketMapper::toModel);
     }
 
