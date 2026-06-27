@@ -6,10 +6,13 @@ import lombok.*;
 /**
  * DTO de entrada para a mutation {@code ask} do GraphQL.
  * <p>
- * Contém a mensagem livre do usuário mais os dados estruturados do chamado
- * preenchidos via formulário no MS1. Esses dados são injetados como contexto
- * no prompt da IA, permitindo que ela crie o ticket e a issue no GitHub
- * sem precisar perguntar ao usuário durante o chat.
+ * Contém o {@code ticketId} gerado pelo capiva-core (banco) e os dados
+ * estruturados do chamado. O ticketId é usado como:
+ * <ul>
+ *   <li>ID de conversação na ChatMemory (contexto de diálogo)</li>
+ *   <li>Referência ao criar a issue no GitHub</li>
+ *   <li>Chave que o serverless de escalonamento usa para atualizar severidade</li>
+ * </ul>
  */
 @Getter
 @Setter
@@ -18,8 +21,9 @@ import lombok.*;
 @Builder
 public class AskInputDTO {
 
+    /** ID do ticket gerado pelo PostgreSQL no capiva-core (ex: TICKET_000001). */
     @NotBlank
-    private String conversationId;
+    private String ticketId;
 
     /** Nome do usuário que abriu o chamado. */
     @NotBlank

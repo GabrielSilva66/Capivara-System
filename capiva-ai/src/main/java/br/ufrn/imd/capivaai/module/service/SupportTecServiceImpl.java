@@ -79,7 +79,9 @@ public class SupportTecServiceImpl implements SupportTecService {
                         QuestionAnswerAdvisor.builder(vectorStore).build(),
                         MessageChatMemoryAdvisor.builder(chatMemory).build()
                 )
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, input.getConversationId()))
+                // ticketId é o ID gerado pelo banco — serve como chave de memória de diálogo
+                // e como referência que a IA deve usar ao criar a issue no GitHub
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, input.getTicketId()))
                 .user(enrichedMessage)
                 .stream()
                 .content()
@@ -95,7 +97,8 @@ public class SupportTecServiceImpl implements SupportTecService {
 
         String cleanAnswer = STATUS_PATTERN.matcher(rawAnswer).replaceAll("").strip();
 
-        System.out.printf("[capiva-ai] status=%s | answer=%s%n", ticketStatus, cleanAnswer);
+        System.out.printf("[capiva-ai] ticketId=%s | status=%s | answer=%s%n",
+                input.getTicketId(), ticketStatus, cleanAnswer);
 
         return new AskResponse(cleanAnswer, ticketStatus);
     }
@@ -103,13 +106,15 @@ public class SupportTecServiceImpl implements SupportTecService {
     private String buildEnrichedMessage(AskInputDTO input) {
         return """
                 [CONTEXTO DO CHAMADO]
+                ID do Ticket: %s
                 Usuário: %s
                 Título: %s
                 Descrição: %s
                 Severidade: %s
 
-
+                Use o ID do Ticket acima como referência ao criar a issue no GitHub.
                 """.formatted(
+                input.getTicketId(),
                 input.getUserName(),
                 input.getTitle(),
                 input.getDescription(),

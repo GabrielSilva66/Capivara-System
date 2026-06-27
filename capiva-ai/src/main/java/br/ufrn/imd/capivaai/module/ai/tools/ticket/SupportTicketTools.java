@@ -1,6 +1,6 @@
 package br.ufrn.imd.capivaai.module.ai.tools.ticket;
 
-import br.ufrn.imd.capivaai.domain.model.Ticket;
+import br.ufrn.imd.capivaai.domain.repository.SupportTecRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -8,35 +8,36 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+
 @Component
 @RequiredArgsConstructor
 public class SupportTicketTools {
 
-    private final TicketQueueService queueService;
+    private final SupportTecRepository repository;
 
     @Tool(description = """
-            Cria um ticket de suporte para atendimento humano.
-            Chame listTickets() ANTES para verificar duplicatas.
-            Retorna o número do ticket e a posição do usuário na fila.
+            Busca na base de conhecimento técnica interna soluções e procedimentos
+            relacionados ao problema descrito. Retorna os trechos mais relevantes
+            encontrados na documentação catalogada.
+            Chame ANTES de escalar para o GitHub, se encontrar solução, resolva
+            diretamente sem criar issue.
             """)
-    public String createTicket(
-            @ToolParam(description = "Nome do usuário") String userName,
-            @ToolParam(description = "Título curto do problema") String title,
-            @ToolParam(description = "Descrição detalhada do problema") String description,
-            @ToolParam(description = "Severidade: BAIXA, MEDIA, ALTA ou CRITICA") String severity) {
+    public String searchKnowledgeBase(
+            @ToolParam(description = "Descrição do problema ou palavras-chave para busca") String query,
+            @ToolParam(description = "Número máximo de resultados (1 a 5)") int maxResults) {
 
-        Ticket ticket = queueService.create(userName, title, description, severity);
-        int position = queueService.getPosition(ticket.id());
+        int limit = Math.max(1, Math.min(maxResults, 5));
+        List<String> matches = repository.findClosestMatches(query, limit);
 
-        return """
-                Ticket criado com sucesso!
-                ID: %s
-                Título: %s
-                Severidade: %s
-                Status: %s
-                Posição na fila: %d° lugar
-                Criado em: %s
-                """.formatted(ticket.id(), ticket.title(), ticket.severity(),
-                ticket.status(), position, ticket.createdAt());
+        if (matches.isEmpty()) {
+            return "Nenhum documento relevante encontrado na base de conhecimento para: \"" + query + "\"";
+        }
+
+        StringBuilder sb = new StringBuilder("Resultados encontrados na base de conhecimento:\n\n");
+        for (int i = 0; i < matches.size(); i++) {
+            sb.append("--- Documento ").append(i + 1).append(" ---\n");
+            sb.append(matches.get(i)).append("\n\n");
+        }
+        return sb.toString();
     }
 }

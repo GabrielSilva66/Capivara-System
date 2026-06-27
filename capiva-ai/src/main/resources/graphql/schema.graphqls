@@ -16,8 +16,8 @@ type Mutation {
 
 "Dados completos do chamado enviados pelo MS1"
 input AskInput {
-    "ID de conversa para manter histórico (chat memory). UUID gerado pelo MS1."
-    conversationId: String!
+    "ID do ticket gerado pelo banco no capiva-core (ex: TICKET_000001). Usado como chave de memória e referência na issue do GitHub."
+    ticketId: String!
     "Nome do usuário (preenchido via formulário no MS1)"
     userName: String!
     "Título do problema (preenchido via formulário no MS1)"
