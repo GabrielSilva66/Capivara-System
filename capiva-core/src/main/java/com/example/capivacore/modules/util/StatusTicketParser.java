@@ -32,11 +32,9 @@ public final class StatusTicketParser {
     public static Severity parseSeverity(String rawSeverity) {
         return switch (rawSeverity.toUpperCase()) {
             case "BAIXA"   -> Severity.LOW;
-            case "MEDIA"   -> Severity.MID;
             case "ALTA"    -> Severity.HIGH;
             case "CRITICA" -> Severity.URGENT;
             default        -> Severity.MID;
         };
     }
-
 }

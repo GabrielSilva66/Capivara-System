@@ -5,6 +5,8 @@ import com.example.capivacore.domain.model.enums.StatusTicket;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.LocalDateTime;
 
@@ -18,7 +20,13 @@ import java.time.LocalDateTime;
 public class TicketEntity {
 
     @Id
-    @Column(name = "ticket_id", nullable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "ticket_id",
+            nullable = false,
+            length = 50,
+            insertable = false,
+            updatable = false,
+            columnDefinition = "VARCHAR(50) DEFAULT generate_ticket_id()")
     private String ticketId;
 
     @Column(name = "user_name", nullable = false)

@@ -11,11 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 
 @Slf4j
-@RestController("/api")
+@RestController
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class TicketController {
 
@@ -34,21 +34,20 @@ public class TicketController {
     }
 
     @GetMapping("/tickets/{id}")
-    public ResponseEntity<Ticket> getById(@PathVariable UUID id) {
+    public ResponseEntity<Ticket> getById(@PathVariable String id) {
         return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/tickets/{id}/status")
-    public ResponseEntity<Ticket> updateStatus(@PathVariable UUID id, @RequestParam String status) {
+    public ResponseEntity<Ticket> updateStatus(@PathVariable String id, @RequestParam String status) {
         Ticket updated = service.updateStatus(id, status);
         return ResponseEntity.ok(updated);
     }
 
-
-    @PostMapping("update_severity")
+    @PostMapping("update-severity")
     public ResponseEntity<Void> updateSeverity(){
-
-        return (ResponseEntity<Void>) ResponseEntity.ok();
+        service.runSlaEscalation();
+        return ResponseEntity.ok().build();
     }
 }
 

@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Pattern;
 
 public record SupportRequestDTO(
 
-        String conversationId,
-
         @NotBlank(message = "userName é obrigatório")
         String userName,
 

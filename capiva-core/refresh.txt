@@ -1,0 +1,2 @@
+curl -X POST http://localhost:8081/actuator/refresh
+curl -X POST http://localhost:8083/actuator/refresh

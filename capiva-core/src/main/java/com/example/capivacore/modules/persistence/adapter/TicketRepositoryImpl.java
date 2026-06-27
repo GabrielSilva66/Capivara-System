@@ -46,5 +46,10 @@ public class TicketRepositoryImpl implements TicketRepository {
                 .map(TicketMapper::toModel)
                 .toList();
     }
+
+    @Override
+    public void delete(String ticketId){
+        jpaRepository.deleteById(ticketId);
+    }
 }
 

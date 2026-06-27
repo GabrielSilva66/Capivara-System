@@ -8,9 +8,16 @@ import static com.example.capivacore.modules.util.StatusTicketParser.parseSeveri
 
 public class TicketMapper {
 
-    public static Ticket toDTO(SupportRequestDTO request, StatusTicket status, String conversationId){
+    private TicketMapper() {}
+
+    /**
+     * Cria um {@link Ticket} de domínio a partir do request do front.
+     * O {@code ticketId} é intencionalmente deixado nulo — o banco o gera
+     * automaticamente via {@code generate_ticket_id()} no INSERT.
+     */
+    public static Ticket toTicket(SupportRequestDTO request, StatusTicket status) {
         Ticket ticket = new Ticket();
-        ticket.setTicketId(conversationId);
+        // ticketId = null → será preenchido pelo DEFAULT do PostgreSQL
         ticket.setUserName(request.userName());
         ticket.setTitle(request.title());
         ticket.setDescription(request.description());
@@ -18,9 +25,4 @@ public class TicketMapper {
         ticket.setStatus(status);
         return ticket;
     }
-
-
-//    public static toEntity(){
-//
-//    }
 }

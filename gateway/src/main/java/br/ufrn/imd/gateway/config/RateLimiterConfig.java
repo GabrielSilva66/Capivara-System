@@ -9,10 +9,9 @@ import reactor.core.publisher.Mono;
 @Configuration
 public class RateLimiterConfig {
 
-    @Bean
+    @Bean("globalKeyResolver")
     @Primary
     public KeyResolver globalKeyResolver() {
-
         return exchange -> Mono.just("GLOBAL_RATE_LIMIT_KEY");
     }
 }

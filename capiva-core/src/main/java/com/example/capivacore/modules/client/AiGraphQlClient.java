@@ -35,24 +35,23 @@ public class AiGraphQlClient {
 
 
     @RateLimiter(name = "capiva-ai-client")
-    public AiAskResponse ask(SupportRequestDTO request, String conversationId) {
-        log.info("[AiGraphQlClient] Chamando MS2 | conversationId={} | status=?",
-                conversationId);
+    public AiAskResponse ask(SupportRequestDTO request, String ticketId) {
+        log.info("[AiGraphQlClient] Chamando MS2 | ticketId={}", ticketId);
 
         AiAskResponse response = graphQlClient.document(ASK_MUTATION)
                 .variable("input", Map.of(
-                        "conversationId", conversationId,
-                        "userName",       request.userName(),
-                        "title",          request.title(),
-                        "description",    request.description(),
-                        "severity",       request.severity()
+                        "ticketId",   ticketId,
+                        "userName",   request.userName(),
+                        "title",      request.title(),
+                        "description", request.description(),
+                        "severity",   request.severity()
                 ))
                 .retrieve("ask")
                 .toEntity(AiAskResponse.class)
                 .block();
 
-        log.info("[AiGraphQlClient] MS2 respondeu | ticketStatus={}", 
-                response != null ? response.ticketStatus() : "null");
+        log.info("[AiGraphQlClient] MS2 respondeu | ticketId={} | status={}",
+                ticketId, response != null ? response.ticketStatus() : "null");
 
         return response;
     }

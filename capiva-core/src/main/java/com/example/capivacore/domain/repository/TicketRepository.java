@@ -23,5 +23,7 @@ public interface TicketRepository {
 
     /** Lista tickets por status. */
     List<Ticket> findByStatus(String status);
+
+    void delete(String ticketId);
 }
 

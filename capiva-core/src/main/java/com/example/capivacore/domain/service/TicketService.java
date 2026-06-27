@@ -6,7 +6,6 @@ import com.example.capivacore.modules.web.dto.SupportResponseDTO;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Coordena o fluxo: recebe os dados do formulário via REST, chama o MS2 via
@@ -23,6 +22,6 @@ public interface TicketService {
 
     Ticket updateStatus(String id, String newStatus);
 
-    void updateSeverity();
+    void runSlaEscalation();
 }
 

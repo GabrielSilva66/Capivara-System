@@ -9,7 +9,7 @@ public class TicketMapper {
 
     public static TicketEntity toEntity(Ticket ticket) {
         TicketEntity entity = new TicketEntity();
-        entity.setTicketId(ticket.getTicketId());
+        // ticket_id é gerado automaticamente pelo PostgreSQL via generate_ticket_id()
         entity.setUserName(ticket.getUserName());
         entity.setTitle(ticket.getTitle());
         entity.setDescription(ticket.getDescription());
