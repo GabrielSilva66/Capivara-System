@@ -1,2 +1,22 @@
 curl -X POST http://localhost:8081/actuator/refresh
 curl -X POST http://localhost:8083/actuator/refresh
+
+
+
+
+sudo systemctl start grafana-server
+
+
+http://localhost:9090/targets
+
+
+
+
+# 1. Remove o container antigo
+podman rm -f capiva-prometheus
+
+# 2. Garante as permissões de segurança do Fedora (SELinux)
+chcon -t svirt_sandbox_file_t ./prometheus.yml
+
+# 3. Sobe o container na porta 9090 padrão
+podman run -d --name capiva-prometheus -p 9090:9090 -v "$(pwd)/prometheus.yml":/etc/prometheus/prometheus.yml:Z docker.io/prom/prometheus
