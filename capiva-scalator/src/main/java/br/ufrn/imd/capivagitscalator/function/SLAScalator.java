@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class SLAScalator {
@@ -71,6 +73,12 @@ public class SLAScalator {
     }
 
     private String extractTicketId(String body) {
+        if (body == null) return null;
+        Pattern pattern = Pattern.compile("TICKET_\\d+");
+        Matcher matcher = pattern.matcher(body);
+        if (matcher.find()) {
+            return matcher.group();
+        }
         return null;
     }
 }

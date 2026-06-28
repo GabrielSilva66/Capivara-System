@@ -20,9 +20,9 @@ public class ScalatorClient {
         this.webClient = webClientBuilder.baseUrl(scalatorUrl).build();
     }
     public List<EscalatedTicketDTO> triggerEscalation() {
-        log.info("[ScalatorClient] Disparando chamada de escalação via Eureka (Load Balanced)...");
         try {
-            return webClient.post()
+            return webClient.get()
+                    .uri("/escalateStaleTickets")
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<EscalatedTicketDTO>>() {})
                     .block();
