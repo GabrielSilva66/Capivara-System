@@ -1,0 +1,327 @@
+# ============================================================
+# SystemCapivara – Podman Compose
+# Uso: podman compose up -d
+#
+# Variáveis de ambiente obrigatórias (via arquivo .env):
+#   CAPIVA_SSH_KEY      – Chave SSH privada (PEM) para o config-server ler
+#                         o repositório Git remoto. Passe como string completa,
+#                         incluindo as linhas BEGIN/END PRIVATE KEY.
+#   URL_DB              – JDBC URL do PostgreSQL (ex: jdbc:postgresql://host:5432/capivara)
+#   USERNAME_DB         – Usuário do banco de dados
+#   PASSWORD_DB         – Senha do banco de dados
+#   AI_API_KEY_GROQ     – API key do Groq (Spring AI)
+#   GITHUB_TOKEN        – Token pessoal do GitHub (capiva-scalator + capiva-ai MCP)
+# ============================================================
+
+name: system-capivara
+
+# ─────────────────────────────────────────────────────────────
+# Rede interna compartilhada entre todos os serviços
+# ─────────────────────────────────────────────────────────────
+networks:
+  capivara-net:
+    driver: bridge
+
+# ─────────────────────────────────────────────────────────────
+# Volume persistente para o Redis (gateway rate-limiter)
+# ─────────────────────────────────────────────────────────────
+volumes:
+  redis-data:
+
+services:
+
+  # ──────────────────────────────────────────────
+  # 1. Spring Cloud Config Server (porta 8888)
+  # ──────────────────────────────────────────────
+  server-config:
+    build:
+      context: server-config
+      dockerfile: Dockerfile
+    image: localhost/capivara/server-config:latest
+    container_name: capivara-server-config
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "8888:8888"
+    environment:
+      SPRING_APPLICATION_NAME: capivara-server-config
+      SERVER_PORT: "8888"
+      # A chave SSH é passada como variável de ambiente para o container
+      CAPIVA_SSH_KEY: "${CAPIVA_SSH_KEY}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # 2. Redis (rate-limiter do Gateway)
+  # ──────────────────────────────────────────────
+  redis:
+    image: docker.io/redis:7-alpine
+    container_name: capivara-redis
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # 3. Eureka Server (porta 8761)
+  # ──────────────────────────────────────────────
+  eureka:
+    build:
+      context: eureka
+      dockerfile: Dockerfile
+    image: localhost/capivara/eureka:latest
+    container_name: capivara-eureka
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_APPLICATION_NAME: eureka-server
+      SERVER_PORT: "8761"
+      EUREKA_INSTANCE_HOSTNAME: eureka
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      SPRING_CONFIG_ADDITIONAL_LOCATION: "file:/etc/capivara/application.properties"
+    volumes:
+      - ./container-config/application.properties:/etc/capivara/application.properties:ro,Z
+    depends_on:
+      server-config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ──────────────────────────────────────────────
+  # 4. capiva-core – Instância 1 (porta 8081)
+  # ──────────────────────────────────────────────
+  capiva-core-1:
+    build:
+      context: capiva-core
+      dockerfile: Dockerfile
+    image: localhost/capivara/capiva-core:latest
+    container_name: capivara-core-1
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_APPLICATION_NAME: capiva-core
+      SERVER_PORT: "8081"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka:8761/eureka/"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      URL_DB: "${URL_DB}"
+      USERNAME_DB: "${USERNAME_DB}"
+      PASSWORD_DB: "${PASSWORD_DB}"
+      SPRING_CONFIG_ADDITIONAL_LOCATION: "file:/etc/capivara/application.properties"
+    volumes:
+      - ./container-config/application.properties:/etc/capivara/application.properties:ro,Z
+    depends_on:
+      eureka:
+        condition: service_healthy
+      server-config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # 5. capiva-core – Instância 2 (porta 8083)
+  # ──────────────────────────────────────────────
+  capiva-core-2:
+    build:
+      context: capiva-core
+      dockerfile: Dockerfile
+    image: localhost/capivara/capiva-core:latest  # reutiliza a mesma imagem
+    container_name: capivara-core-2
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_APPLICATION_NAME: capiva-core
+      SERVER_PORT: "8083"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka:8761/eureka/"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      URL_DB: "${URL_DB}"
+      USERNAME_DB: "${USERNAME_DB}"
+      PASSWORD_DB: "${PASSWORD_DB}"
+      SPRING_CONFIG_ADDITIONAL_LOCATION: "file:/etc/capivara/application.properties"
+    volumes:
+      - ./container-config/application.properties:/etc/capivara/application.properties:ro,Z
+    depends_on:
+      eureka:
+        condition: service_healthy
+      server-config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # 6. capiva-ai (porta 8088)
+  # ──────────────────────────────────────────────
+  capiva-ai:
+    build:
+      context: capiva-ai
+      dockerfile: Dockerfile
+    image: localhost/capivara/capiva-ai:latest
+    container_name: capivara-ai
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_APPLICATION_NAME: capiva-ai
+      SERVER_PORT: "8088"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka:8761/eureka/"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      AI_API_KEY_GROQ: "${AI_API_KEY_GROQ}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      SPRING_CONFIG_ADDITIONAL_LOCATION: "file:/etc/capivara/application.properties"
+    volumes:
+      - ./container-config/application.properties:/etc/capivara/application.properties:ro,Z
+    depends_on:
+      eureka:
+        condition: service_healthy
+      server-config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8088/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # 7. capiva-scalator (porta 8085)
+  # ──────────────────────────────────────────────
+  capiva-scalator:
+    build:
+      context: capiva-scalator
+      dockerfile: Dockerfile
+    image: localhost/capivara/capiva-scalator:latest
+    container_name: capivara-scalator
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_APPLICATION_NAME: capiva-scalator
+      SERVER_PORT: "8085"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka:8761/eureka/"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      SPRING_CONFIG_ADDITIONAL_LOCATION: "file:/etc/capivara/application.properties"
+    volumes:
+      - ./container-config/application.properties:/etc/capivara/application.properties:ro,Z
+    depends_on:
+      eureka:
+        condition: service_healthy
+      server-config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # 8. Gateway (porta 8080) – inicia por último
+  # ──────────────────────────────────────────────
+  gateway:
+    build:
+      context: gateway
+      dockerfile: Dockerfile
+    image: localhost/capivara/gateway:latest
+    container_name: capivara-gateway
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: gateway
+      SERVER_PORT: "8080"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka:8761/eureka/"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_CONFIG_ADDITIONAL_LOCATION: "file:/etc/capivara/application.properties"
+    volumes:
+      - ./container-config/application.properties:/etc/capivara/application.properties:ro,Z
+    depends_on:
+      eureka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      capiva-core-1:
+        condition: service_healthy
+      capiva-core-2:
+        condition: service_healthy
+      capiva-ai:
+        condition: service_healthy
+      capiva-scalator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # 9. Prometheus (porta 9090)
+  # ──────────────────────────────────────────────
+  prometheus:
+    image: docker.io/prom/prometheus:latest
+    container_name: capivara-prometheus
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:Z # Mapeia seu arquivo de configuração
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+  # ──────────────────────────────────────────────
+  # 10. Grafana (porta 3000)
+  # ──────────────────────────────────────────────
+  grafana:
+    image: docker.io/grafana/grafana:latest
+    container_name: capivara-grafana
+    restart: unless-stopped
+    networks:
+      - capivara-net
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
