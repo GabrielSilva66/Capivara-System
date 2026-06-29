@@ -10,7 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import java.util.List;
+import java.util.Map;
 
 
 @Slf4j
@@ -29,8 +32,11 @@ public class TicketController {
     }
 
     @GetMapping("/tickets")
-    public ResponseEntity<List<Ticket>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<Page<Ticket>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size) {
+        int pageSize = (size == null) ? 10 : size;
+        return ResponseEntity.ok(service.findAll(PageRequest.of(page, pageSize)));
     }
 
     @GetMapping("/tickets/{id}")
@@ -45,9 +51,9 @@ public class TicketController {
     }
 
     @PostMapping("update-severity")
-    public ResponseEntity<Void> updateSeverity(){
+    public ResponseEntity<Map<String, String>> updateSeverity(){
         service.runSlaEscalation();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Map.of("status", "Severidade atualizada!"));
     }
 }
 

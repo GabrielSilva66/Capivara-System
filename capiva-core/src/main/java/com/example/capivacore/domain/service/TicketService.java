@@ -4,7 +4,8 @@ import com.example.capivacore.domain.model.Ticket;
 import com.example.capivacore.modules.web.dto.SupportRequestDTO;
 import com.example.capivacore.modules.web.dto.SupportResponseDTO;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 /**
@@ -16,7 +17,7 @@ public interface TicketService {
 
     SupportResponseDTO processSupport(SupportRequestDTO request);
 
-    List<Ticket> findAll();
+    Page<Ticket> findAll(Pageable pageable);
 
     Optional<Ticket> findById(String id);
 

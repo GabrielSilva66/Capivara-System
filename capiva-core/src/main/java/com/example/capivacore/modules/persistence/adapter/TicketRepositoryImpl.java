@@ -9,6 +9,8 @@ import com.example.capivacore.modules.persistence.repository.TicketJpaRepository
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,11 +28,9 @@ public class TicketRepositoryImpl implements TicketRepository {
     }
 
     @Override
-    public List<Ticket> findAll() {
-        return jpaRepository.findAll()
-                .stream()
-                .map(TicketMapper::toModel)
-                .toList();
+    public Page<Ticket> findAll(Pageable pageable) {
+        return jpaRepository.findAll(pageable)
+                .map(TicketMapper::toModel);
     }
 
     @Override

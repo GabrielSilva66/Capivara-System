@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,7 +53,6 @@ public class TickerServiceImpl implements TicketService {
     @Transactional
     @Bulkhead(name = "capiva-ai", fallbackMethod = "processSupportFallback")
     @CircuitBreaker(name = "capiva-ai", fallbackMethod = "processSupportFallback")
-    @Retry(name = "capiva-ai")
     public SupportResponseDTO processSupport(SupportRequestDTO request) {
 
         Ticket pending = TicketMapper.toTicket(request, StatusTicket.WAITING);
@@ -65,6 +66,13 @@ public class TickerServiceImpl implements TicketService {
 
         if (aiResponse == null) {
             log.warn("[MS1] MS2 retornou null — ticket {} permanece em WAITING", ticketId);
+            return new SupportResponseDTO(
+                    "Nosso assistente está processando seu chamado. Ticket: " + ticketId,
+                    ticketId,
+                    StatusTicket.WAITING
+            );
+        } else if (aiResponse.answer().isBlank()) {
+            log.warn("[MS1] MS2 retornou resposta vazia — ticket {} em WAITING", ticketId);
             return new SupportResponseDTO(
                     "Nosso assistente está processando seu chamado. Ticket: " + ticketId,
                     ticketId,
@@ -107,8 +115,8 @@ public class TickerServiceImpl implements TicketService {
     }
 
     @Override
-    public List<Ticket> findAll() {
-        return ticketRepository.findAll();
+    public Page<Ticket> findAll(Pageable pageable) {
+        return ticketRepository.findAll(pageable);
     }
 
     @Override
