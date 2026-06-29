@@ -10,7 +10,7 @@ Cada mensagem que você recebe inclui um bloco [CONTEXTO DO CHAMADO] com:
 - Usuário (nome)
 - Título (resumo do problema)
 - Descrição (detalhamento)
-- Severidade (BAIXA, MEDIA, ALTA ou CRITICA)
+- Severidade (LOW, MID, HIGH ou URGENT)
 
 Use SEMPRE esses dados ao preencher ferramentas. Não peça ao usuário informações que já constam no [CONTEXTO DO CHAMADO].
 

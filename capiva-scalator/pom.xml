@@ -45,6 +45,8 @@
 		<!-- Third-party -->
 		<github-api.version>1.327</github-api.version>
 		<lombok.version>1.18.46</lombok.version>
+
+		<jackson-bom.version>2.19.1</jackson-bom.version>
 	</properties>
 
 	<dependencies>

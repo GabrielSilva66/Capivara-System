@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
+@Configuration
 public class SLAScalator {
 
     @Value("${github.token}")
@@ -55,6 +57,7 @@ public class SLAScalator {
                             log.info("[SLA ESTOURADO] Escalonando Issue #{}", issue.getNumber());
 
                             String upSeverity = SeverityUtil.upSeverity(severity).toString();
+                            issue.removeLabels(severity.toString());
                             issue.addLabels(upSeverity);
                             issue.comment("️ **[SLA ESCALATOR]** Este ticket estourou o limite de tempo de resposta sem atendimento e foi escalado automaticamente para **CRÍTICO**.");
 
