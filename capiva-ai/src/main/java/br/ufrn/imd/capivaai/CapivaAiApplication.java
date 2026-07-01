@@ -1,14 +1,14 @@
 package br.ufrn.imd.capivaai;
 
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration;
+import org.springframework.ai.model.transformers.autoconfigure.TransformersEmbeddingModelAutoConfiguration;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication(exclude = {OpenAiEmbeddingAutoConfiguration.class})
+@SpringBootApplication(exclude = {TransformersEmbeddingModelAutoConfiguration.class})
 public class CapivaAiApplication {
 
 	public static void main(String[] args) {

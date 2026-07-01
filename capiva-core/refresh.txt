@@ -2,14 +2,10 @@ curl -X POST http://localhost:8081/actuator/refresh
 curl -X POST http://localhost:8083/actuator/refresh
 
 
+curl -X POST http://localhost:9090/-/reload
 
 
 sudo systemctl start grafana-server
-
-
-http://localhost:9090/targets
-
-
 
 
 # 1. Remove o container antigo

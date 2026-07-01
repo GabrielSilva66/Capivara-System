@@ -27,19 +27,7 @@ import java.util.Optional;
 
 import static com.example.capivacore.modules.util.StatusTicketParser.parseSeverity;
 
-/**
- * Implementação do orquestrador de suporte do MS1.
- *
- * <p>Fluxo principal:
- * <ol>
- *   <li>Persiste o ticket imediatamente com status {@code WAITING} —
- *       o banco gera o {@code ticket_id} via {@code generate_ticket_id()}.</li>
- *   <li>Usa o {@code ticket_id} gerado como referência ao chamar a IA (MS2),
- *       permitindo que ele seja rastreado na issue do GitHub e pelo serverless
- *       de escalonamento (capiva-scalator).</li>
- *   <li>Atualiza o status do ticket com base na resposta da IA.</li>
- * </ol>
- */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -93,27 +81,6 @@ public class TickerServiceImpl implements TicketService {
         return new SupportResponseDTO(aiResponse.answer(), ticketId, finalStatus);
     }
 
-    /**
-     * Fallback acionado quando o Circuit Breaker está aberto ou após esgotamento
-     * das retentativas. O ticket já foi persistido com status {@code WAITING};
-     * apenas informa o usuário que a IA está indisponível.
-     */
-    public SupportResponseDTO processSupportFallback(SupportRequestDTO request, Throwable ex) {
-        log.error("[MS1] Fallback ativado — MS2 indisponível: {}", ex.getMessage());
-
-        // Ticket salvo antes da chamada à IA — persiste novamente em caso de falha total
-        Ticket pending = TicketMapper.toTicket(request, StatusTicket.WAITING);
-        Ticket saved   = ticketRepository.save(pending);
-
-        return new SupportResponseDTO(
-                "Nosso assistente está temporariamente indisponível. " +
-                "Seu chamado foi registrado com o ID " + saved.getTicketId() +
-                " e será atendido em breve pela nossa equipe.",
-                saved.getTicketId(),
-                StatusTicket.WAITING
-        );
-    }
-
     @Override
     public Page<Ticket> findAll(Pageable pageable) {
         return ticketRepository.findAll(pageable);
@@ -143,5 +110,22 @@ public class TickerServiceImpl implements TicketService {
                 ticketRepository.save(ticket);
             });
         }
+    }
+
+
+    private SupportResponseDTO processSupportFallback(SupportRequestDTO request, Throwable ex) {
+        log.error("[MS1] Fallback ativado — MS2 indisponível: {}", ex.getMessage());
+
+        // Ticket salvo antes da chamada à IA — persiste novamente em caso de falha total
+        Ticket pending = TicketMapper.toTicket(request, StatusTicket.WAITING);
+        Ticket saved   = ticketRepository.save(pending);
+
+        return new SupportResponseDTO(
+                "Nosso assistente está temporariamente indisponível. " +
+                        "Seu chamado foi registrado com o ID " + saved.getTicketId() +
+                        " e será atendido em breve pela nossa equipe.",
+                saved.getTicketId(),
+                StatusTicket.WAITING
+        );
     }
 }
