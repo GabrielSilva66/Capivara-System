@@ -79,7 +79,7 @@ public class SupportTecServiceImpl implements SupportTecService {
                         QuestionAnswerAdvisor.builder(vectorStore).build(),
                         MessageChatMemoryAdvisor.builder(chatMemory).build()
                 )
-                // ticketId é o ID gerado pelo banco — serve como chave de memória de diálogo
+                // ticketId é o ID gerado pelo banco, serve como chave de memória de diálogo
                 // e como referência que a IA deve usar ao criar a issue no GitHub
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, input.getTicketId()))
                 .user(enrichedMessage)
